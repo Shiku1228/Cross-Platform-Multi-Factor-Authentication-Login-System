@@ -31,6 +31,7 @@
                 <!-- Login Form -->
                 <div id="loginForm" class="form-container active">
                     <h2>Welcome Back</h2>
+                    <p class="email-link-instruction">Or sign in with your email and password</p>
                     <form id="loginFormElement">
                         <div class="input-group">
                             <i class="fas fa-envelope"></i>
@@ -51,11 +52,43 @@
                             </label>
                             <a href="#" class="forgot-password">Forgot Password?</a>
                         </div>
-                        <button type="submit" class="btn-primary">
+                        <button type="submit" class="btn-primary-login">
                             <i class="fas fa-sign-in-alt"></i>
                             Sign In
                         </button>
                     </form>
+                    
+                    <!-- Passwordless Sign-in Option -->
+                    <div class="passwordless-section">
+                        <div class="divider">
+                            <span>OR</span>
+                        </div>
+                        <button type="button" class="btn-magic-link" onclick="showEmailLinkForm()">
+                            <i class="fas fa-envelope"></i>
+                            <span>Sign in with Email Link</span>
+                            <small>Quick & Secure</small>
+                        </button>
+                    </div>
+                    
+                    <!-- Email Link Form (Hidden by default) -->
+                    <div id="emailLinkForm" class="email-link-form" style="display: none;">
+                        <h3>Passwordless Sign-in</h3>
+                        <p>Enter your email address and we'll send you a magic link to sign in instantly.</p>
+                        <div class="input-group">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="emailLinkEmail" placeholder="Enter your email">
+                        </div>
+                        <button type="button" class="btn-magic-link-send" onclick="sendEmailLink()">
+                            <i class="fas fa-paper-plane"></i>
+                            <span>Send Magic Link</span>
+                            <small>Check your email</small>
+                        </button>
+                        <button type="button" class="btn-back" onclick="hideEmailLinkForm()">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Login
+                        </button>
+                    </div>
+                    
                     <div class="auth-switch">
                         <p>Don't have an account? <a href="#" onclick="switchForm('register')">Sign Up</a></p>
                     </div>
@@ -89,7 +122,7 @@
                         </div>
                         <div class="input-group">
                             <i class="fas fa-phone"></i>
-                            <input type="tel" id="phoneNumber" placeholder="Phone Number (for MFA)" required>
+                            <input type="tel" id="phoneNumber" placeholder="+639526509781 or 09526509781" required>
                         </div>
                         <button type="submit" class="btn-primary">
                             <i class="fas fa-user-plus"></i>
@@ -197,9 +230,9 @@
                             <i class="fas fa-user-cog"></i>
                             Profile Settings
                         </button>
-                        <button class="btn-action">
+                        <button class="btn-action" onclick="setupMFA()">
                             <i class="fas fa-mobile-alt"></i>
-                            Manage Devices
+                            Setup MFA
                         </button>
                         <button class="btn-action">
                             <i class="fas fa-history"></i>
@@ -214,6 +247,9 @@
             </div>
         </div>
     </div>
+
+    <!-- reCAPTCHA Container -->
+    <div id="recaptcha-container"></div>
 
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay">

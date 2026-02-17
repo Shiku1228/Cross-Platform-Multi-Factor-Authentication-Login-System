@@ -22,4 +22,15 @@ auth.settings = {
     appVerificationDisabledForTesting: false // Set to true only for testing
 };
 
+// Initialize reCAPTCHA verifier
+window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+    'size': 'invisible',
+    'callback': (response) => {
+        console.log('reCAPTCHA solved successfully');
+    },
+    'expired-callback': () => {
+        console.log('reCAPTCHA expired');
+    }
+});
+
 console.log('Firebase initialized successfully');

@@ -169,6 +169,13 @@ async function handleRegister() {
         return;
     }
     
+    // Validate phone number format
+    const formattedPhoneNumber = formatPhoneNumber(phoneNumber);
+    if (!formattedPhoneNumber) {
+        showToast('Invalid phone number format. Please include country code (e.g., +1234567890)', 'error');
+        return;
+    }
+    
     try {
         showLoading();
         
@@ -181,11 +188,11 @@ async function handleRegister() {
             displayName: name
         });
         
-        // Save user data to Firestore
+        // Save user data to Firestore with formatted phone number
         await db.collection('users').doc(user.uid).set({
             name: name,
             email: email,
-            phoneNumber: phoneNumber,
+            phoneNumber: formattedPhoneNumber,
             mfaEnabled: false,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             lastLogin: firebase.firestore.FieldValue.serverTimestamp()
@@ -207,6 +214,25 @@ async function handleRegister() {
     } finally {
         hideLoading();
     }
+}
+
+// Format phone number to E.164 format
+function formatPhoneNumber(phoneNumber) {
+    // Remove all non-digit characters
+    const cleaned = phoneNumber.replace(/\D/g, '');
+    
+    // Check if it starts with country code
+    if (phoneNumber.startsWith('+')) {
+        return '+' + cleaned;
+    } else if (cleaned.length === 10) {
+        // Assume US number if 10 digits
+        return '+1' + cleaned;
+    } else if (cleaned.length > 10) {
+        // Assume first digits are country code
+        return '+' + cleaned;
+    }
+    
+    return null;
 }
 
 // Check MFA requirement
@@ -232,23 +258,39 @@ async function checkMFARequirement(user) {
 // Send MFA code
 async function sendMFACode() {
     try {
-        if (!currentUser || !currentUser.phoneNumber) {
+        if (!currentUser) {
+            showToast('User not logged in', 'error');
+            return;
+        }
+
+        // Get user's phone number from Firestore
+        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+        const userData = userDoc.data();
+        
+        if (!userData || !userData.phoneNumber) {
             showToast('Phone number not registered for MFA', 'error');
             return;
         }
+
+        // Use Firebase Phone Auth with reCAPTCHA
+        const appVerifier = window.recaptchaVerifier;
+        const confirmationResult = await auth.signInWithPhoneNumber(userData.phoneNumber, appVerifier);
         
-        // In a real implementation, you would use Firebase Phone Auth
-        // For demo purposes, we'll simulate sending a code
-        const appVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container');
-        const confirmationResult = await currentUser.signInWithPhoneNumber(currentUser.phoneNumber, appVerifier);
+        // Store confirmation result globally for verification
         window.confirmationResult = confirmationResult;
         
         showToast('Verification code sent to your phone', 'success');
         
     } catch (error) {
         console.error('Error sending MFA code:', error);
-        // For demo purposes, we'll simulate success
-        showToast('Verification code sent to your phone', 'success');
+        
+        if (error.code === 'auth/too-many-requests') {
+            showToast('Too many requests. Please try again later.', 'error');
+        } else if (error.code === 'auth/invalid-phone-number') {
+            showToast('Invalid phone number format', 'error');
+        } else {
+            showToast('Error sending verification code', 'error');
+        }
     }
 }
 
@@ -265,29 +307,32 @@ async function handleMFAVerification() {
     try {
         showLoading();
         
-        // In a real implementation, you would verify with Firebase
-        // For demo purposes, we'll accept any 6-digit code
-        if (window.confirmationResult) {
-            const result = await window.confirmationResult.confirm(verificationCode);
-            currentUser = result.user;
-        } else {
-            // Demo mode - accept any code
-            if (verificationCode.length === 6) {
-                // Update last login
-                await db.collection('users').doc(currentUser.uid).update({
-                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            } else {
-                throw new Error('Invalid verification code');
-            }
+        if (!window.confirmationResult) {
+            throw new Error('No verification session found');
         }
+        
+        // Verify the code with Firebase
+        const result = await window.confirmationResult.confirm(verificationCode);
+        currentUser = result.user;
+        
+        // Update last login in Firestore
+        await db.collection('users').doc(currentUser.uid).update({
+            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+        });
         
         showToast('MFA verification successful!', 'success');
         showDashboard();
         
     } catch (error) {
         console.error('MFA verification error:', error);
-        showToast('Invalid verification code. Please try again.', 'error');
+        
+        if (error.code === 'auth/invalid-verification-code') {
+            showToast('Invalid verification code. Please try again.', 'error');
+        } else if (error.code === 'auth/code-expired') {
+            showToast('Verification code expired. Please request a new one.', 'error');
+        } else {
+            showToast('Verification failed. Please try again.', 'error');
+        }
         
         // Clear the inputs
         codeInputs.forEach(input => input.value = '');
@@ -376,6 +421,24 @@ function handleAuthError(error) {
             break;
         case 'auth/network-request-failed':
             message = 'Network error. Please check your connection.';
+            break;
+        case 'auth/invalid-action-code':
+            message = 'Invalid or expired sign-in link. Please request a new one.';
+            break;
+        case 'auth/expired-action-code':
+            message = 'Sign-in link has expired. Please request a new one.';
+            break;
+        case 'auth/invalid-verification-code':
+            message = 'Invalid verification code. Please try again.';
+            break;
+        case 'auth/code-expired':
+            message = 'Verification code expired. Please request a new one.';
+            break;
+        case 'auth/invalid-phone-number':
+            message = 'Invalid phone number format. Please include country code.';
+            break;
+        case 'auth/quota-exceeded':
+            message = 'SMS quota exceeded. Please try again later.';
             break;
         default:
             message = error.message || 'An unknown error occurred';
@@ -479,11 +542,33 @@ async function setupMFA() {
     }
     
     try {
-        const phoneNumber = prompt('Enter your phone number for MFA:');
+        const phoneNumber = prompt('Enter your phone number for MFA (with country code, e.g., +1234567890):');
         if (!phoneNumber) return;
         
+        // Format and validate phone number
+        const formattedPhoneNumber = formatPhoneNumber(phoneNumber);
+        if (!formattedPhoneNumber) {
+            showToast('Invalid phone number format', 'error');
+            return;
+        }
+        
+        // Test the phone number by sending a verification code
+        showLoading();
+        const appVerifier = window.recaptchaVerifier;
+        const confirmationResult = await auth.signInWithPhoneNumber(formattedPhoneNumber, appVerifier);
+        
+        // Ask user to verify the test code
+        const testCode = prompt('Enter the verification code sent to your phone:');
+        if (!testCode) {
+            hideLoading();
+            return;
+        }
+        
+        await confirmationResult.confirm(testCode);
+        
+        // If verification succeeds, enable MFA for the user
         await db.collection('users').doc(currentUser.uid).update({
-            phoneNumber: phoneNumber,
+            phoneNumber: formattedPhoneNumber,
             mfaEnabled: true,
             mfaEnabledAt: firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -492,7 +577,16 @@ async function setupMFA() {
         
     } catch (error) {
         console.error('MFA setup error:', error);
-        showToast('Error setting up MFA', 'error');
+        
+        if (error.code === 'auth/invalid-verification-code') {
+            showToast('Invalid verification code. MFA setup failed.', 'error');
+        } else if (error.code === 'auth/invalid-phone-number') {
+            showToast('Invalid phone number. Please check the format.', 'error');
+        } else {
+            showToast('Error setting up MFA. Please try again.', 'error');
+        }
+    } finally {
+        hideLoading();
     }
 }
 
@@ -500,4 +594,149 @@ async function setupMFA() {
 document.addEventListener('DOMContentLoaded', function() {
     // This would be added to the dashboard in a real implementation
     console.log('MFA setup function available: setupMFA()');
+    
+    // Add quick test function for development
+    window.testSMS = async function() {
+        if (!currentUser) {
+            showToast('Please login first', 'error');
+            return;
+        }
+        
+        try {
+            const phoneNumber = '+639526509781'; // Test number
+            
+            // Enable MFA in Firestore
+            await db.collection('users').doc(currentUser.uid).update({
+                phoneNumber: phoneNumber,
+                mfaEnabled: true,
+                mfaEnabledAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            showToast('MFA enabled! Logout and login again to test SMS', 'success');
+            
+        } catch (error) {
+            console.error('Error enabling MFA:', error);
+            showToast('Error enabling MFA', 'error');
+        }
+    };
+    
+    console.log('🧪 Test function available: testSMS() - Run in console to enable MFA');
 });
+
+// Handle email link sign-in
+async function handleEmailLinkSignIn() {
+    if (auth.isSignInWithEmailLink(window.location.href)) {
+        let email = window.localStorage.getItem('emailForSignIn');
+        if (!email) {
+            email = prompt('Please provide your email for confirmation');
+        }
+        if (!email) {
+            showToast('Email is required for sign-in.', 'error');
+            return;
+        }
+
+        showLoading();
+        try {
+            const result = await auth.signInWithEmailLink(email, window.location.href);
+            window.localStorage.removeItem('emailForSignIn');
+            currentUser = result.user;
+            
+            // Update last login in Firestore
+            await db.collection('users').doc(currentUser.uid).update({
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            showToast('Successfully signed in with email link!', 'success');
+            await checkMFARequirement(currentUser);
+        } catch (error) {
+            console.error('Error signing in with email link:', error);
+            handleAuthError(error);
+        } finally {
+            hideLoading();
+        }
+    }
+}
+
+// Send email link for passwordless sign-in
+async function sendEmailLink() {
+    const email = document.getElementById('emailLinkEmail')?.value || 
+                 prompt('Enter your email address for passwordless sign-in:');
+    
+    if (!email) {
+        showToast('Email address is required', 'error');
+        return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showToast('Please enter a valid email address', 'error');
+        return;
+    }
+
+    console.log('🔍 DEBUG: Attempting to send email link to:', email);
+    console.log('🔍 DEBUG: Current URL:', window.location.href);
+
+    try {
+        showLoading();
+        
+        const actionCodeSettings = {
+            url: window.location.href,
+            handleCodeInApp: true,
+            iOS: {
+                bundleId: 'com.example.ios'
+            },
+            android: {
+                packageName: 'com.example.android',
+                installApp: true,
+                minimumVersion: '12'
+            }
+        };
+
+        console.log('🔍 DEBUG: Action code settings:', actionCodeSettings);
+        console.log('🔍 DEBUG: Sending email link...');
+
+        await auth.sendSignInLinkToEmail(email, actionCodeSettings);
+        
+        console.log('✅ DEBUG: Email link sent successfully!');
+        window.localStorage.setItem('emailForSignIn', email);
+        
+        showToast('Passwordless sign-in link sent to your email!', 'success');
+        
+        // Hide email link form if it exists
+        const emailLinkForm = document.getElementById('emailLinkForm');
+        if (emailLinkForm) {
+            emailLinkForm.style.display = 'none';
+        }
+        
+        // Show additional help
+        setTimeout(() => {
+            showToast('Check your Spam/Promotions folders if not found in Primary', 'info');
+        }, 2000);
+        
+    } catch (error) {
+        console.error('❌ DEBUG: Error sending email link:', error);
+        console.error('❌ DEBUG: Error code:', error.code);
+        console.error('❌ DEBUG: Error message:', error.message);
+        
+        handleAuthError(error);
+    } finally {
+        hideLoading();
+    }
+}
+
+// Check for email link sign-in on page load
+document.addEventListener('DOMContentLoaded', handleEmailLinkSignIn);
+
+// UI functions for email link form
+function showEmailLinkForm() {
+    document.getElementById('emailLinkForm').style.display = 'block';
+    document.getElementById('loginFormElement').style.display = 'none';
+    document.querySelector('.passwordless-section').style.display = 'none';
+}
+
+function hideEmailLinkForm() {
+    document.getElementById('emailLinkForm').style.display = 'none';
+    document.getElementById('loginFormElement').style.display = 'block';
+    document.querySelector('.passwordless-section').style.display = 'block';
+}
