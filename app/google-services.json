@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "375980700764",
+    "project_id": "cross-platform-multi-fac-auth",
+    "storage_bucket": "cross-platform-multi-fac-auth.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:375980700764:android:92c1f5c5fed0e6b826e299",
+        "android_client_info": {
+          "package_name": "com.example.crossplatmultifacauth"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA87zEGxBrC29lrHuOu0OqhY46YRGXo_GE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
