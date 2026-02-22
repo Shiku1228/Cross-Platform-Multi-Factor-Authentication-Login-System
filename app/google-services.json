@@ -1,26 +1,36 @@
 {
   "project_info": {
-    "project_number": "375980700764",
-    "project_id": "cross-platform-multi-fac-auth",
-    "storage_bucket": "cross-platform-multi-fac-auth.firebasestorage.app"
+    "project_number": "295561901319",
+    "project_id": "multi-factor-authenticat-8e8bc",
+    "storage_bucket": "multi-factor-authenticat-8e8bc.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:375980700764:android:92c1f5c5fed0e6b826e299",
+        "mobilesdk_app_id": "1:295561901319:android:eb614d70d61ef8ce0601a2",
         "android_client_info": {
           "package_name": "com.example.crossplatmultifacauth"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "295561901319-ppgjjnn83ir1s2pt25k713h75b63d41k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyA87zEGxBrC29lrHuOu0OqhY46YRGXo_GE"
+          "current_key": "AIzaSyDe5OCE1GEXCiDS9z2oI8nvODh4s-FHvZg"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "295561901319-naeudl8qh6bpv5ccitibp2skd32lb05n.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

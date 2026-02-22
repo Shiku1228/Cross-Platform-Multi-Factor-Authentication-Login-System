@@ -9,9 +9,9 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="com.example.crossplatmultifacauth" />
-                  <option name="mobileSdkAppId" value="1:375980700764:android:92c1f5c5fed0e6b826e299" />
-                  <option name="projectId" value="cross-platform-multi-fac-auth" />
-                  <option name="projectNumber" value="375980700764" />
+                  <option name="mobileSdkAppId" value="1:295561901319:android:eb614d70d61ef8ce0601a2" />
+                  <option name="projectId" value="multi-factor-authenticat-8e8bc" />
+                  <option name="projectNumber" value="295561901319" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
