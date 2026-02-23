@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "295561901319-cpvdn8ilm4386i7pvvl9bfakke7bqs9n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.crossplatmultifacauth",
+            "certificate_hash": "29cc7b7354ed8fedbc69ff57f8d8be45a9f2033d"
+          }
+        },
+        {
           "client_id": "295561901319-ppgjjnn83ir1s2pt25k713h75b63d41k.apps.googleusercontent.com",
           "client_type": 3
         }

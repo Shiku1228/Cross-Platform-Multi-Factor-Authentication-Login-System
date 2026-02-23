@@ -45,6 +45,9 @@ dependencies {
     //Firebase Authentication (for the log in implementation)
     implementation("com.google.firebase:firebase-auth")
 
+    //Google Sign In
+    implementation("com.google.android.gms:play-services-auth:21.3.0")
+
     //Firebase Firestore
     implementation("com.google.firebase:firebase-firestore")
 

@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,7 +51,23 @@ public class MainActivity extends AppCompatActivity {
         logoutButton = findViewById(R.id.logoutButton);
         enrollMfaButton = findViewById(R.id.enrollMfaButton);
 
-        userEmailTextView.setText(user.getEmail());
+        userEmailTextView.setText("Logged in as: " + user.getEmail());
+
+        // Check if email is verified
+        if (!user.isEmailVerified()) {
+            enrollMfaButton.setText("Verify Email to Enable MFA");
+            enrollMfaButton.setOnClickListener(v -> {
+                user.sendEmailVerification().addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Toast.makeText(this, "Verification email sent! Check your inbox.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this, "Failed to send verification email.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            });
+        } else {
+            enrollMfaButton.setOnClickListener(v -> showPhoneInputDialog());
+        }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -66,20 +81,16 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
-
-        enrollMfaButton.setOnClickListener(v -> showPhoneInputDialog());
     }
 
     private void showPhoneInputDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Enroll MFA");
+        builder.setMessage("Enter phone number (Use your Firebase Test Number if on Free Plan)");
         
         final EditText input = new EditText(this);
         input.setHint("+639123456789");
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT);
-        input.setLayoutParams(lp);
+        input.setPadding(50, 40, 50, 40);
         builder.setView(input);
 
         builder.setPositiveButton("Send Code", (dialog, which) -> {
@@ -94,39 +105,43 @@ public class MainActivity extends AppCompatActivity {
 
     private void startMfaEnrollment(String phoneNumber) {
         FirebaseUser user = mAuth.getCurrentUser();
-        user.getMultiFactor().getSession().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                MultiFactorSession session = task.getResult();
-                PhoneAuthOptions options = PhoneAuthOptions.newBuilder()
-                        .setPhoneNumber(phoneNumber)
-                        .setMultiFactorSession(session)
-                        .setActivity(this)
-                        .setTimeout(30L, TimeUnit.SECONDS)
-                        .setCallbacks(new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-                            @Override
-                            public void onVerificationCompleted(@NonNull PhoneAuthCredential credential) {}
+        if (user != null) {
+            user.getMultiFactor().getSession().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    MultiFactorSession session = task.getResult();
+                    PhoneAuthOptions options = PhoneAuthOptions.newBuilder()
+                            .setPhoneNumber(phoneNumber)
+                            .setMultiFactorSession(session)
+                            .setActivity(this)
+                            .setTimeout(30L, TimeUnit.SECONDS)
+                            .setCallbacks(new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+                                @Override
+                                public void onVerificationCompleted(@NonNull PhoneAuthCredential credential) {}
 
-                            @Override
-                            public void onVerificationFailed(@NonNull com.google.firebase.FirebaseException e) {
-                                Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
-                            }
+                                @Override
+                                public void onVerificationFailed(@NonNull com.google.firebase.FirebaseException e) {
+                                    Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                }
 
-                            @Override
-                            public void onCodeSent(@NonNull String vId, @NonNull PhoneAuthProvider.ForceResendingToken token) {
-                                verificationId = vId;
-                                showCodeInputDialog();
-                            }
-                        })
-                        .build();
-                PhoneAuthProvider.verifyPhoneNumber(options);
-            }
-        });
+                                @Override
+                                public void onCodeSent(@NonNull String vId, @NonNull PhoneAuthProvider.ForceResendingToken token) {
+                                    verificationId = vId;
+                                    showCodeInputDialog();
+                                }
+                            })
+                            .build();
+                    PhoneAuthProvider.verifyPhoneNumber(options);
+                }
+            });
+        }
     }
 
     private void showCodeInputDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Enter Verification Code");
+        builder.setTitle("Enter 6-Digit Code");
         final EditText input = new EditText(this);
+        input.setHint("123456");
+        input.setPadding(50, 40, 50, 40);
         builder.setView(input);
 
         builder.setPositiveButton("Verify", (dialog, which) -> {
@@ -137,14 +152,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void finalizeEnrollment(String code) {
-        PhoneAuthCredential credential = PhoneAuthProvider.getCredential(verificationId, code);
-        mAuth.getCurrentUser().getMultiFactor().enroll(PhoneMultiFactorGenerator.getAssertion(credential), "My Phone")
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        Toast.makeText(this, "MFA Enabled! Next login will require verification.", Toast.LENGTH_LONG).show();
-                    } else {
-                        Toast.makeText(this, "Failed: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                });
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            PhoneAuthCredential credential = PhoneAuthProvider.getCredential(verificationId, code);
+            user.getMultiFactor().enroll(PhoneMultiFactorGenerator.getAssertion(credential), "My Phone")
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            Toast.makeText(this, "MFA Enabled! Logout and login again to see the challenge.", Toast.LENGTH_LONG).show();
+                        } else {
+                            String error = task.getException() != null ? task.getException().getMessage() : "Unknown error";
+                            Toast.makeText(this, "Enrollment Failed: " + error, Toast.LENGTH_LONG).show();
+                        }
+                    });
+        }
     }
 }
