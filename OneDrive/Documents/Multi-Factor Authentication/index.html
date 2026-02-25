@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Factor Authentication</title>
+    <link rel="stylesheet" href="styles-desktop.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Auth Container -->
+        <div id="authContainer" class="auth-container">
+            <div class="auth-card">
+                <!-- Logo Section -->
+                <div class="logo-section">
+                    <div class="logo">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h1></h1>
+                    <p>Multi-Factor Authentication</p>
+                </div>
+
+                <!-- Login Form -->
+                <div id="loginForm" class="form-container active">
+                    <h2>Welcome Back</h2>
+                    <p class="email-link-instruction">Or sign in with your email and password</p>
+                    <form id="loginFormElement">
+                        <div class="input-group">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="loginEmail" placeholder="Email Address" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="loginPassword" placeholder="Password" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('loginPassword')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-options">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="rememberMe">
+                                <span class="checkmark"></span>
+                                Remember me
+                            </label>
+                            <a href="#" class="forgot-password">Forgot Password?</a>
+                        </div>
+                        <button type="submit" class="btn-primary-login">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Sign In
+                        </button>
+                    </form>
+                    
+                    <!-- Passwordless Sign-in Option -->
+                    <div class="passwordless-section">
+                        <div class="divider">
+                            <span>OR</span>
+                        </div>
+                        <button type="button" class="btn-magic-link" onclick="showEmailLinkForm()">
+                            <i class="fas fa-envelope"></i>
+                            <span>Sign in with Email Link</span>
+                            <small>Quick & Secure</small>
+                        </button>
+                    </div>
+                    
+                    <!-- Email Link Form (Hidden by default) -->
+                    <div id="emailLinkForm" class="email-link-form" style="display: none;">
+                        <h3>Passwordless Sign-in</h3>
+                        <p>Enter your email address and we'll send you a magic link to sign in instantly.</p>
+                        <div class="input-group">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="emailLinkEmail" placeholder="Enter your email">
+                        </div>
+                        <button type="button" class="btn-magic-link-send" onclick="sendEmailLink()">
+                            <i class="fas fa-paper-plane"></i>
+                            <span>Send Magic Link</span>
+                            <small>Check your email</small>
+                        </button>
+                        <button type="button" class="btn-back" onclick="hideEmailLinkForm()">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Login
+                        </button>
+                    </div>
+                    
+                    <div class="auth-switch">
+                        <p>Don't have an account? <a href="#" onclick="switchForm('register')">Sign Up</a></p>
+                    </div>
+                </div>
+
+                <!-- Register Form -->
+                <div id="registerForm" class="form-container">
+                    <h2>Create Account</h2>
+                    <form id="registerFormElement">
+                        <div class="input-group">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="registerName" placeholder="Full Name" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="registerEmail" placeholder="Email Address" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="registerPassword" placeholder="Password" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('registerPassword')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-phone"></i>
+                            <input type="tel" id="phoneNumber" placeholder="+639526509781 or 09526509781" required>
+                        </div>
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-user-plus"></i>
+                            Create Account
+                        </button>
+                    </form>
+                    <div class="auth-switch">
+                        <p>Already have an account? <a href="#" onclick="switchForm('login')">Sign In</a></p>
+                    </div>
+                </div>
+
+                <!-- MFA Verification Form -->
+                <div id="mfaForm" class="form-container">
+                    <h2>Verify Your Identity</h2>
+                    <p class="mfa-instruction">We've sent a verification code to your registered device</p>
+                    <form id="mfaFormElement">
+                        <div class="verification-code-container">
+                            <input type="text" maxlength="1" class="verification-code" id="code1" required>
+                            <input type="text" maxlength="1" class="verification-code" id="code2" required>
+                            <input type="text" maxlength="1" class="verification-code" id="code3" required>
+                            <input type="text" maxlength="1" class="verification-code" id="code4" required>
+                            <input type="text" maxlength="1" class="verification-code" id="code5" required>
+                            <input type="text" maxlength="1" class="verification-code" id="code6" required>
+                        </div>
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-check-circle"></i>
+                            Verify
+                        </button>
+                        <div class="resend-section">
+                            <p>Didn't receive the code? <a href="#" onclick="resendCode()">Resend</a></p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Container -->
+        <div id="dashboardContainer" class="dashboard-container" style="display: none;">
+            <nav class="navbar">
+                <div class="nav-brand">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>SecureAuth</span>
+                </div>
+                <div class="nav-menu">
+                    <div class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="userEmail">user@example.com</span>
+                    </div>
+                    <button class="btn-logout" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </button>
+                </div>
+            </nav>
+
+            <div class="dashboard-content">
+                <div class="welcome-section">
+                    <h1>Welcome to Your Dashboard</h1>
+                    <p>You have successfully authenticated with multi-factor security</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-shield-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Security Status</h3>
+                            <p class="stat-value">Protected</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-key"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>MFA Status</h3>
+                            <p class="stat-value">Enabled</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Last Login</h3>
+                            <p class="stat-value" id="lastLogin">Just now</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Account Type</h3>
+                            <p class="stat-value">Premium</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-section">
+                    <h2>Quick Actions</h2>
+                    <div class="action-buttons">
+                        <button class="btn-action">
+                            <i class="fas fa-user-cog"></i>
+                            Profile Settings
+                        </button>
+                        <button class="btn-action" onclick="setupMFA()">
+                            <i class="fas fa-mobile-alt"></i>
+                            Setup MFA
+                        </button>
+                        <button class="btn-action">
+                            <i class="fas fa-history"></i>
+                            Login History
+                        </button>
+                        <button class="btn-action">
+                            <i class="fas fa-bell"></i>
+                            Security Alerts
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- reCAPTCHA Container -->
+    <div id="recaptcha-container"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Authenticating...</p>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <div class="toast-content">
+            <i class="fas fa-check-circle"></i>
+            <span id="toastMessage">Success!</span>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
