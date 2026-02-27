@@ -2,7 +2,6 @@ package com.example.crossplatmultifacauth;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -67,6 +66,9 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
+            // Save email to SharedPreferences so MFASelectionActivity can find it
+            getSharedPreferences("PREFS", MODE_PRIVATE).edit().putString("email", email).apply();
+
             mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
@@ -97,7 +99,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void sendOTPToGmail(String email) {
         ActionCodeSettings actionCodeSettings = ActionCodeSettings.newBuilder()
-                .setUrl("https://crossplatmultifacauth.page.link/login") // Replace with your Firebase Dynamic Link
+                .setUrl("https://crossplatmultifacauth.page.link/login")
                 .setHandleCodeInApp(true)
                 .setAndroidPackageName("com.example.crossplatmultifacauth", true, "34")
                 .build();
@@ -106,7 +108,6 @@ public class LoginActivity extends AppCompatActivity {
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         Toast.makeText(LoginActivity.this, "Sign-in link sent to Gmail!", Toast.LENGTH_LONG).show();
-                        // Save the email locally to verify it later
                         getSharedPreferences("PREFS", MODE_PRIVATE).edit().putString("email", email).apply();
                     } else {
                         Toast.makeText(LoginActivity.this, "Error: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
@@ -163,8 +164,8 @@ public class LoginActivity extends AppCompatActivity {
     private void handleSignInError(Exception exception) {
         if (exception instanceof FirebaseAuthMultiFactorException) {
             FirebaseAuthMultiFactorException e = (FirebaseAuthMultiFactorException) exception;
-            MFAActivity.resolver = e.getResolver();
-            Intent intent = new Intent(LoginActivity.this, MFAActivity.class);
+            MFASelectionActivity.resolver = e.getResolver();
+            Intent intent = new Intent(LoginActivity.this, MFASelectionActivity.class);
             startActivity(intent);
         } else {
             Toast.makeText(LoginActivity.this, "Login failed: " + exception.getMessage(),

@@ -38,20 +38,14 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.constraintlayout)
 
-    //firebase dependencies=======================================================
-    //Firebase BOM (manage the version of the firebase)
+    // Updated Firebase BOM
     implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
-
-    //Firebase Authentication (for the log in implementation)
     implementation("com.google.firebase:firebase-auth")
-
-    //Google Sign In
-    implementation("com.google.android.gms:play-services-auth:21.3.0")
-
-    //Firebase Firestore
     implementation("com.google.firebase:firebase-firestore")
-
     implementation("com.google.firebase:firebase-analytics")
+
+    // Updated Google Play Services Auth
+    implementation("com.google.android.gms:play-services-auth:21.3.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

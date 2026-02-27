@@ -13,17 +13,34 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.CrossPlatMultiFacAuth">
+
         <activity
             android:name=".LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- Intent filter to handle Email Login Links -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="multi-factor-authenticat-8e8bc.firebaseapp.com"
+                    android:scheme="https" />
+                <data
+                    android:host="crossplatmultifacauth.page.link"
+                    android:scheme="https" />
+            </intent-filter>
         </activity>
+
         <activity
             android:name=".RegisterActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MFASelectionActivity"
             android:exported="false" />
         <activity
             android:name=".MFAActivity"

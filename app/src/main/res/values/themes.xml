@@ -1,8 +1,26 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.CrossPlatMultiFacAuth" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- Aurora Palette Attributes -->
+        <item name="colorPrimary">@color/aurora_primary</item>
+        <item name="colorOnPrimary">@color/aurora_on_primary</item>
+        <item name="colorPrimaryContainer">@color/aurora_primary_container</item>
+
+        <item name="colorSecondary">@color/aurora_secondary</item>
+        <item name="colorOnSecondary">@color/aurora_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/aurora_secondary_container</item>
+
+        <item name="colorTertiary">@color/aurora_tertiary</item>
+        <item name="colorTertiaryContainer">@color/aurora_tertiary_container</item>
+
+        <item name="android:windowBackground">@color/aurora_background</item>
+        <item name="colorSurface">@color/aurora_surface</item>
+        <item name="colorOnSurface">@color/aurora_on_surface</item>
+        <item name="colorOnBackground">@color/aurora_on_background</item>
+
+        <!-- Status bar and navigation bar -->
+        <item name="android:statusBarColor">@color/aurora_background</item>
+        <item name="android:navigationBarColor">@color/aurora_background</item>
     </style>
 
     <style name="Theme.CrossPlatMultiFacAuth" parent="Base.Theme.CrossPlatMultiFacAuth" />

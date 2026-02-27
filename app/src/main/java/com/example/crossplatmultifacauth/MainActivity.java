@@ -39,35 +39,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mAuth = FirebaseAuth.getInstance();
-        FirebaseUser user = mAuth.getCurrentUser();
-
-        if (user == null) {
-            startActivity(new Intent(this, LoginActivity.class));
-            finish();
-            return;
-        }
-
+        
         userEmailTextView = findViewById(R.id.userEmailTextView);
         logoutButton = findViewById(R.id.logoutButton);
         enrollMfaButton = findViewById(R.id.enrollMfaButton);
-
-        userEmailTextView.setText("Logged in as: " + user.getEmail());
-
-        // Check if email is verified
-        if (!user.isEmailVerified()) {
-            enrollMfaButton.setText("Verify Email to Enable MFA");
-            enrollMfaButton.setOnClickListener(v -> {
-                user.sendEmailVerification().addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        Toast.makeText(this, "Verification email sent! Check your inbox.", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(this, "Failed to send verification email.", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            });
-        } else {
-            enrollMfaButton.setOnClickListener(v -> showPhoneInputDialog());
-        }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -80,6 +55,41 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             startActivity(intent);
             finish();
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkUserStatus(); // Refresh status every time the user returns to the app
+    }
+
+    private void checkUserStatus() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
+
+        // Reload the user to get the latest email verification status
+        user.reload().addOnCompleteListener(task -> {
+            FirebaseUser updatedUser = mAuth.getCurrentUser();
+            userEmailTextView.setText("Logged in as: " + updatedUser.getEmail());
+
+            if (!updatedUser.isEmailVerified()) {
+                enrollMfaButton.setText("Verify Email to Enable MFA");
+                enrollMfaButton.setOnClickListener(v -> {
+                    updatedUser.sendEmailVerification().addOnCompleteListener(emailTask -> {
+                        if (emailTask.isSuccessful()) {
+                            Toast.makeText(this, "Verification email sent! Check your inbox.", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                });
+            } else {
+                enrollMfaButton.setText("Enable Multi-Factor Auth (MFA)");
+                enrollMfaButton.setOnClickListener(v -> showPhoneInputDialog());
+            }
         });
     }
 
