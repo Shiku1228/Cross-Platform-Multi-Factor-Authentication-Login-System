@@ -2,6 +2,7 @@ package com.example.crossplatmultifacauth;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -9,12 +10,12 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.MultiFactorSession;
@@ -53,15 +54,18 @@ public class MainActivity extends AppCompatActivity {
         logoutButton.setOnClickListener(v -> {
             mAuth.signOut();
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
             finish();
         });
+
+        checkUserStatus();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        checkUserStatus(); // Refresh status every time the user returns to the app
+        checkUserStatus(); 
     }
 
     private void checkUserStatus() {
@@ -72,108 +76,132 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // Reload the user to get the latest email verification status
         user.reload().addOnCompleteListener(task -> {
             FirebaseUser updatedUser = mAuth.getCurrentUser();
-            userEmailTextView.setText("Logged in as: " + updatedUser.getEmail());
+            if (updatedUser == null) return;
+
+            userEmailTextView.setText("Account: " + updatedUser.getEmail());
 
             if (!updatedUser.isEmailVerified()) {
-                enrollMfaButton.setText("Verify Email to Enable MFA");
+                enrollMfaButton.setText("1. Verify Email (Required)");
+                enrollMfaButton.setAlpha(0.8f);
                 enrollMfaButton.setOnClickListener(v -> {
                     updatedUser.sendEmailVerification().addOnCompleteListener(emailTask -> {
                         if (emailTask.isSuccessful()) {
-                            Toast.makeText(this, "Verification email sent! Check your inbox.", Toast.LENGTH_SHORT).show();
+                            showStatusDialog("Verification Sent", "Check your inbox and click the link. Then return here.");
+                        } else {
+                            Toast.makeText(this, "Error: " + emailTask.getException().getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });
                 });
             } else {
-                enrollMfaButton.setText("Enable Multi-Factor Auth (MFA)");
+                enrollMfaButton.setText("2. Enable MFA (SMS)");
+                enrollMfaButton.setAlpha(1.0f);
                 enrollMfaButton.setOnClickListener(v -> showPhoneInputDialog());
+                
+                if (!updatedUser.getMultiFactor().getEnrolledFactors().isEmpty()) {
+                    enrollMfaButton.setText("MFA is Active ✅");
+                    enrollMfaButton.setEnabled(false);
+                }
             }
         });
     }
 
+    private void showStatusDialog(String title, String message) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
     private void showPhoneInputDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Enroll MFA");
-        builder.setMessage("Enter phone number (Use your Firebase Test Number if on Free Plan)");
-        
         final EditText input = new EditText(this);
         input.setHint("+639123456789");
-        input.setPadding(50, 40, 50, 40);
-        builder.setView(input);
+        int padding = (int) (20 * getResources().getDisplayMetrics().density);
+        input.setPadding(padding, padding, padding, padding);
 
-        builder.setPositiveButton("Send Code", (dialog, which) -> {
-            String phoneNumber = input.getText().toString().trim();
-            if (!phoneNumber.isEmpty()) {
-                startMfaEnrollment(phoneNumber);
-            }
-        });
-        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
-        builder.show();
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Step 2: Enroll Phone")
+                .setMessage("Enter your mobile number to receive security codes.")
+                .setView(input)
+                .setPositiveButton("Send SMS Code", (dialog, which) -> {
+                    String phoneNumber = input.getText().toString().trim();
+                    if (!phoneNumber.isEmpty()) {
+                        startMfaEnrollment(phoneNumber);
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void startMfaEnrollment(String phoneNumber) {
         FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null) {
-            user.getMultiFactor().getSession().addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    MultiFactorSession session = task.getResult();
-                    PhoneAuthOptions options = PhoneAuthOptions.newBuilder()
-                            .setPhoneNumber(phoneNumber)
-                            .setMultiFactorSession(session)
-                            .setActivity(this)
-                            .setTimeout(30L, TimeUnit.SECONDS)
-                            .setCallbacks(new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-                                @Override
-                                public void onVerificationCompleted(@NonNull PhoneAuthCredential credential) {}
+        if (user == null) return;
 
-                                @Override
-                                public void onVerificationFailed(@NonNull com.google.firebase.FirebaseException e) {
-                                    Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                }
+        user.getMultiFactor().getSession().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                MultiFactorSession session = task.getResult();
+                PhoneAuthOptions options = PhoneAuthOptions.newBuilder()
+                        .setPhoneNumber(phoneNumber)
+                        .setMultiFactorSession(session)
+                        .setActivity(this)
+                        .setTimeout(60L, TimeUnit.SECONDS)
+                        .setCallbacks(new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+                            @Override
+                            public void onVerificationCompleted(@NonNull PhoneAuthCredential credential) {}
 
-                                @Override
-                                public void onCodeSent(@NonNull String vId, @NonNull PhoneAuthProvider.ForceResendingToken token) {
-                                    verificationId = vId;
-                                    showCodeInputDialog();
-                                }
-                            })
-                            .build();
-                    PhoneAuthProvider.verifyPhoneNumber(options);
-                }
-            });
-        }
+                            @Override
+                            public void onVerificationFailed(@NonNull com.google.firebase.FirebaseException e) {
+                                showStatusDialog("SMS Failed", e.getMessage());
+                            }
+
+                            @Override
+                            public void onCodeSent(@NonNull String vId, @NonNull PhoneAuthProvider.ForceResendingToken token) {
+                                verificationId = vId;
+                                showCodeInputDialog();
+                            }
+                        })
+                        .build();
+                PhoneAuthProvider.verifyPhoneNumber(options);
+            }
+        });
     }
 
     private void showCodeInputDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Enter 6-Digit Code");
         final EditText input = new EditText(this);
         input.setHint("123456");
-        input.setPadding(50, 40, 50, 40);
-        builder.setView(input);
+        int padding = (int) (20 * getResources().getDisplayMetrics().density);
+        input.setPadding(padding, padding, padding, padding);
 
-        builder.setPositiveButton("Verify", (dialog, which) -> {
-            String code = input.getText().toString().trim();
-            finalizeEnrollment(code);
-        });
-        builder.show();
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Verify SMS Code")
+                .setMessage("Enter the 6-digit code sent to your phone.")
+                .setView(input)
+                .setPositiveButton("Verify & Enable", (dialog, which) -> {
+                    String code = input.getText().toString().trim();
+                    finalizeEnrollment(code);
+                })
+                .setCancelable(false)
+                .show();
     }
 
     private void finalizeEnrollment(String code) {
         FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null) {
-            PhoneAuthCredential credential = PhoneAuthProvider.getCredential(verificationId, code);
-            user.getMultiFactor().enroll(PhoneMultiFactorGenerator.getAssertion(credential), "My Phone")
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            Toast.makeText(this, "MFA Enabled! Logout and login again to see the challenge.", Toast.LENGTH_LONG).show();
-                        } else {
-                            String error = task.getException() != null ? task.getException().getMessage() : "Unknown error";
-                            Toast.makeText(this, "Enrollment Failed: " + error, Toast.LENGTH_LONG).show();
-                        }
-                    });
-        }
+        if (user == null) return;
+
+        PhoneAuthCredential credential = PhoneAuthProvider.getCredential(verificationId, code);
+        user.getMultiFactor().enroll(PhoneMultiFactorGenerator.getAssertion(credential), "Primary Phone")
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        new MaterialAlertDialogBuilder(this)
+                                .setTitle("MFA Enabled!")
+                                .setMessage("Your account is now protected. Logout and login again to test.")
+                                .setPositiveButton("Logout", (d, w) -> logoutButton.performClick())
+                                .show();
+                    } else {
+                        showStatusDialog("Enrollment Failed", task.getException().getMessage());
+                    }
+                });
     }
 }

@@ -21,14 +21,26 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
 
-            <!-- Intent filter to handle Email Login Links -->
+        <activity
+            android:name=".RegisterActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".MFASelectionActivity"
+            android:exported="true">
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:host="multi-factor-authenticat-8e8bc.firebaseapp.com"
+                    android:pathPrefix="/login"
+                    android:scheme="https" />
+                <data
+                    android:host="multi-factor-authenticat-8e8bc.firebaseapp.com"
+                    android:pathPrefix="/__/auth/action"
                     android:scheme="https" />
                 <data
                     android:host="crossplatmultifacauth.page.link"
@@ -37,14 +49,13 @@
         </activity>
 
         <activity
-            android:name=".RegisterActivity"
-            android:exported="false" />
-        <activity
-            android:name=".MFASelectionActivity"
-            android:exported="false" />
-        <activity
             android:name=".MFAActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".GmailOTPActivity"
+            android:exported="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="false" />

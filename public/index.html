@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Scholaria - Verifying</title>
+    <style>
+      body { font-family: sans-serif; background: #0B0E14; color: white; text-align: center; padding: 50px; }
+      .btn { background: #00E676; color: black; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; margin-top: 20px; }
+    </style>
+  </head>
+  <body>
+    <h2>Verifying your request...</h2>
+    <p>If the app didn't open automatically, click the button below:</p>
+    <a href="https://multi-factor-authenticat-8e8bc.firebaseapp.com/login" class="btn">Open Scholaria App</a>
+    <script>
+      // Automatically try to redirect after a short delay
+      setTimeout(function() {
+        window.location.href = "intent://multi-factor-authenticat-8e8bc.firebaseapp.com/login#Intent;scheme=https;package=com.example.crossplatmultifacauth;end";
+      }, 2000);
+    </script>
+  </body>
+</html>

@@ -2,6 +2,7 @@ package com.example.crossplatmultifacauth;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -98,35 +99,54 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void sendOTPToGmail(String email) {
+        Log.d("LoginActivity", "Attempting to send sign-in link to: " + email);
+        
         ActionCodeSettings actionCodeSettings = ActionCodeSettings.newBuilder()
-                .setUrl("https://crossplatmultifacauth.page.link/login")
+                .setUrl("https://multi-factor-authenticat-8e8bc.firebaseapp.com/login")
                 .setHandleCodeInApp(true)
-                .setAndroidPackageName("com.example.crossplatmultifacauth", true, "34")
+                .setAndroidPackageName("com.example.crossplatmultifacauth", true, null)
                 .build();
+
+        Log.d("LoginActivity", "ActionCodeSettings configured: " + actionCodeSettings.getUrl());
 
         mAuth.sendSignInLinkToEmail(email, actionCodeSettings)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        Toast.makeText(LoginActivity.this, "Sign-in link sent to Gmail!", Toast.LENGTH_LONG).show();
+                        Log.d("LoginActivity", "Sign-in link sent successfully to: " + email);
+                        Toast.makeText(LoginActivity.this, "Sign-in link sent to Gmail! Check your inbox.", Toast.LENGTH_LONG).show();
                         getSharedPreferences("PREFS", MODE_PRIVATE).edit().putString("email", email).apply();
                     } else {
-                        Toast.makeText(LoginActivity.this, "Error: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                        String errorMessage = task.getException() != null ? task.getException().getMessage() : "Unknown error";
+                        Log.e("LoginActivity", "Failed to send sign-in link: " + errorMessage);
+                        Toast.makeText(LoginActivity.this, "Failed to send email: " + errorMessage, Toast.LENGTH_LONG).show();
                     }
                 });
     }
 
     private void handleEmailLinkSignIn(Intent intent) {
         String emailLink = intent.getData() != null ? intent.getData().toString() : null;
+        Log.d("LoginActivity", "handleEmailLinkSignIn: emailLink=" + emailLink);
+        
+        if (emailLink != null) {
+            Log.d("LoginActivity", "handleEmailLinkSignIn: Checking if valid email link");
+        }
+        
         if (mAuth.isSignInWithEmailLink(emailLink)) {
             String email = getSharedPreferences("PREFS", MODE_PRIVATE).getString("email", "");
+            Log.d("LoginActivity", "handleEmailLinkSignIn: Valid link found, signing in with email=" + email);
             mAuth.signInWithEmailLink(email, emailLink)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
+                            Log.d("LoginActivity", "handleEmailLinkSignIn: Sign-in successful, going to dashboard");
                             goToDashboard();
                         } else {
-                            Toast.makeText(this, "Error signing in with link", Toast.LENGTH_SHORT).show();
+                            String errorMessage = task.getException() != null ? task.getException().getMessage() : "Unknown error";
+                            Log.e("LoginActivity", "handleEmailLinkSignIn: Error signing in with link: " + errorMessage);
+                            Toast.makeText(this, "Error signing in with link: " + errorMessage, Toast.LENGTH_LONG).show();
                         }
                     });
+        } else {
+            Log.d("LoginActivity", "handleEmailLinkSignIn: Not a valid email link");
         }
     }
 

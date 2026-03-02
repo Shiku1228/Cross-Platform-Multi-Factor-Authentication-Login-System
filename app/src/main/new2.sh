@@ -1,0 +1,2 @@
+    rm public/index.html
+    
