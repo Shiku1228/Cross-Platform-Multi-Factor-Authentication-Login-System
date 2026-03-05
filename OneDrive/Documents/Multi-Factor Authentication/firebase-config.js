@@ -1,4 +1,3 @@
-// Firebase Configuration - Replace with your own config
 const firebaseConfig = {
   apiKey: "AIzaSyD22Z3gjm44LzfWk_MapeIaU9JSw7BNZwk",
   authDomain: "multi-factor-authenticat-8e8bc.firebaseapp.com",
@@ -9,20 +8,16 @@ const firebaseConfig = {
   measurementId: "G-HS7YDP3WBM"
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Enable multi-factor authentication
-auth.tenantId = null; // Set your tenant ID if using multi-tenancy
+auth.tenantId = null; 
 
-// Configure auth settings
 auth.settings = {
-    appVerificationDisabledForTesting: false // Set to true only for testing
+    appVerificationDisabledForTesting: true 
 };
 
-// Initialize reCAPTCHA verifier
 window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
     'size': 'invisible',
     'callback': (response) => {

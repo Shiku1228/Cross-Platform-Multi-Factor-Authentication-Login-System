@@ -102,7 +102,302 @@ body {
     font-weight: 500;
 }
 
-/* Magic Link Button Styles */
+/* Google Button Styles */
+.passwordless-section .btn-google,
+.btn-google {
+    width: 100% !important;
+    padding: 18px 24px !important;
+    background: linear-gradient(135deg, #4285f4, #1a73e8) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 4px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    margin-bottom: 12px !important;
+    text-decoration: none !important;
+    box-shadow: 0 4px 15px rgba(66, 133, 244, 0.3) !important;
+}
+
+.btn-google::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-google:hover::before {
+    left: 100%;
+}
+
+.passwordless-section .btn-google i,
+.btn-google i {
+    font-size: 24px !important;
+    margin-bottom: 4px !important;
+    color: white !important;
+}
+
+.passwordless-section .btn-google span,
+.btn-google span {
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: white !important;
+}
+
+.passwordless-section .btn-google small,
+.btn-google small {
+    font-size: 12px !important;
+    opacity: 0.9 !important;
+    font-weight: 400 !important;
+    color: white !important;
+}
+
+.passwordless-section .btn-google:hover,
+.btn-google:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 12px 35px rgba(66, 133, 244, 0.4) !important;
+    background: linear-gradient(135deg, #1a73e8, #1557b0) !important;
+}
+
+.passwordless-section .btn-google:active,
+.btn-google:active {
+    transform: translateY(-1px) !important;
+}
+
+/* Gmail Verification Button Styles */
+.btn-gmail-verify {
+    width: 100%;
+    padding: 18px 24px;
+    background: linear-gradient(135deg, #ea4335, #d33b2c);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 8px 25px rgba(234, 67, 53, 0.3);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.btn-gmail-verify::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-gmail-verify:hover::before {
+    left: 100%;
+}
+
+.btn-gmail-verify i {
+    font-size: 24px;
+    margin-bottom: 4px;
+    color: white;
+}
+
+.btn-gmail-verify span {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+}
+
+.btn-gmail-verify small {
+    font-size: 12px;
+    opacity: 0.9;
+    font-weight: 400;
+    color: white;
+}
+
+.btn-gmail-verify:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(234, 67, 53, 0.4);
+    background: linear-gradient(135deg, #d33b2c, #c23321);
+}
+
+.btn-gmail-verify:active {
+    transform: translateY(-1px);
+}
+
+/* Gmail Icon Section */
+.gmail-icon-section {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.gmail-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #ea4335, #d33b2c);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    box-shadow: 0 10px 30px rgba(234, 67, 53, 0.3);
+}
+
+.gmail-icon i {
+    font-size: 36px;
+    color: white;
+}
+
+.gmail-instruction {
+    text-align: center;
+    color: #2d3748;
+    margin-bottom: 8px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.gmail-sub-instruction {
+    text-align: center;
+    color: #718096;
+    margin-bottom: 24px;
+    font-size: 14px;
+}
+
+.gmail-email-display {
+    text-align: center;
+    color: #2d3748;
+    margin-bottom: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    padding: 12px;
+    background: rgba(234, 67, 53, 0.1);
+    border-radius: 8px;
+    border-left: 4px solid #ea4335;
+}
+
+/* Verification Options Styles */
+.verification-options {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+ .verification-method-tabs {
+     display: flex;
+     flex-direction: column;
+     gap: 12px;
+     margin-top: 24px;
+ }
+
+ .verification-panels {
+     margin-top: 16px;
+ }
+
+ .verification-panel {
+     display: none;
+ }
+
+ .verification-panel.active {
+     display: block;
+ }
+
+.btn-verification-option {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+    width: 100%;
+}
+
+ .btn-verification-option.active {
+     border-color: #667eea;
+     background: rgba(102, 126, 234, 0.06);
+ }
+
+.btn-verification-option:hover {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-verification-option i {
+    font-size: 24px;
+    color: #667eea;
+    width: 40px;
+    text-align: center;
+}
+
+.option-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.option-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.option-desc {
+    font-size: 14px;
+    color: #718096;
+}
+
+/* Email Instructions Styles */
+.email-instructions {
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 20px 0;
+}
+
+.email-instructions p {
+    margin-bottom: 8px;
+    color: #2d3748;
+    font-size: 14px;
+}
+
+.email-instructions ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #4a5568;
+    font-size: 13px;
+}
+
+.email-instructions li {
+    margin-bottom: 4px;
+}
+
+#maskedPhone {
+    font-weight: 600;
+    color: #667eea;
+}
 .btn-magic-link {
     width: 100%;
     padding: 18px 24px;
@@ -449,6 +744,8 @@ body {
     border: 2px solid #e2e8f0;
     border-radius: 12px;
     transition: all 0.3s ease;
+    background: white;
+    color: #2d3748;
 }
 
 .verification-code:focus {
@@ -654,6 +951,27 @@ body {
 .resend-section {
     text-align: center;
     margin-top: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Ensure the button on the magic-link screen is always visible/clickable */
+#checkGmailForm .btn-secondary {
+    margin-top: 16px;
+    position: relative;
+    z-index: 2;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    font-weight: 600;
+}
+
+/* Ensure the Back to Login button is visible in verification options */
+#verificationOptionsForm .btn-secondary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    font-weight: 600;
 }
 
 .resend-section p {

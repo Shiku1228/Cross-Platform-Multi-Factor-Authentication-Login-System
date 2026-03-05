@@ -9,17 +9,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Background Animation -->
+    
     <div class="bg-animation">
         <div class="floating-shapes"></div>
     </div>
 
-    <!-- Main Container -->
     <div class="main-container">
-        <!-- Auth Container -->
+        
         <div id="authContainer" class="auth-container">
             <div class="auth-card">
-                <!-- Logo Section -->
+                
                 <div class="logo-section">
                     <div class="logo">
                         <i class="fas fa-shield-alt"></i>
@@ -28,10 +27,10 @@
                     <p>Multi-Factor Authentication</p>
                 </div>
 
-                <!-- Login Form -->
+                
                 <div id="loginForm" class="form-container active">
                     <h2>Welcome Back</h2>
-                    <p class="email-link-instruction">Or sign in with your email and password</p>
+                    <p class="email-link-instruction">Sign in with email and password, or use magic link for passwordless sign-in</p>
                     <form id="loginFormElement">
                         <div class="input-group">
                             <i class="fas fa-envelope"></i>
@@ -58,34 +57,16 @@
                         </button>
                     </form>
                     
-                    <!-- Passwordless Sign-in Option -->
                     <div class="passwordless-section">
                         <div class="divider">
                             <span>OR</span>
                         </div>
-                        <button type="button" class="btn-magic-link" onclick="showEmailLinkForm()">
+                        <button type="button" class="btn-gmail-verify" onclick="sendMagicLinkFromForm()">
                             <i class="fas fa-envelope"></i>
-                            <span>Sign in with Email Link</span>
-                            <small>Quick & Secure</small>
-                        </button>
-                    </div>
-                    
-                    <!-- Email Link Form (Hidden by default) -->
-                    <div id="emailLinkForm" class="email-link-form" style="display: none;">
-                        <h3>Passwordless Sign-in</h3>
-                        <p>Enter your email address and we'll send you a magic link to sign in instantly.</p>
-                        <div class="input-group">
-                            <i class="fas fa-envelope"></i>
-                            <input type="email" id="emailLinkEmail" placeholder="Enter your email">
-                        </div>
-                        <button type="button" class="btn-magic-link-send" onclick="sendEmailLink()">
-                            <i class="fas fa-paper-plane"></i>
-                            <span>Send Magic Link</span>
-                            <small>Check your email</small>
-                        </button>
-                        <button type="button" class="btn-back" onclick="hideEmailLinkForm()">
-                            <i class="fas fa-arrow-left"></i>
-                            Back to Login
+                            <div>
+                                <span>Send Magic Link</span>
+                                <small>Passwordless Sign-in</small>
+                            </div>
                         </button>
                     </div>
                     
@@ -94,7 +75,7 @@
                     </div>
                 </div>
 
-                <!-- Register Form -->
+                
                 <div id="registerForm" class="form-container">
                     <h2>Create Account</h2>
                     <form id="registerFormElement">
@@ -134,10 +115,181 @@
                     </div>
                 </div>
 
-                <!-- MFA Verification Form -->
+                <div id="verificationOptionsForm" class="form-container">
+                    <div class="gmail-icon-section">
+                        <div class="gmail-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                    </div>
+                    <h2>Choose Verification Method</h2>
+                    <p class="gmail-instruction">Select an alternative way to verify your identity:</p>
+
+                    <div class="verification-method-tabs" role="tablist" aria-label="Verification methods">
+                        <button type="button" class="btn-verification-option active" id="methodEmailTab" onclick="selectVerificationMethod('email')" role="tab" aria-selected="true">
+                            <i class="fas fa-envelope"></i>
+                            <div class="option-content">
+                                <span class="option-title">Email code</span>
+                                <span class="option-desc">Get a 6-digit code via email</span>
+                            </div>
+                        </button>
+
+                        <button type="button" class="btn-verification-option" id="methodSmsTab" onclick="selectVerificationMethod('sms')" role="tab" aria-selected="false">
+                            <i class="fas fa-mobile-alt"></i>
+                            <div class="option-content">
+                                <span class="option-title">SMS code (Demo)</span>
+                                <span class="option-desc">Use a demo/test number and code</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="verification-panels">
+                        <div class="verification-panel active" id="verificationEmailPanel" role="tabpanel" aria-labelledby="methodEmailTab">
+                            <form id="verificationEmailFormElement">
+                                <div class="input-group">
+                                    <i class="fas fa-envelope"></i>
+                                    <input type="email" id="verificationEmail" placeholder="Enter your email for Gmail code">
+                                </div>
+                                <button type="submit" class="btn-primary">
+                                    <i class="fas fa-envelope"></i>
+                                    Send Email Code
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="verification-panel" id="verificationSmsPanel" role="tabpanel" aria-labelledby="methodSmsTab">
+                            <form id="verificationSmsRequestFormElement">
+                                <div class="input-group">
+                                    <i class="fas fa-mobile-alt"></i>
+                                    <input type="tel" id="verificationPhone" placeholder="Enter phone number (demo mode)">
+                                </div>
+                                <button type="submit" class="btn-primary">
+                                    <i class="fas fa-mobile-alt"></i>
+                                    Send SMS Code (Demo)
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn-secondary" onclick="showLoginForm()">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Login
+                    </button>
+                </div>
+
+                <div id="gmailVerificationForm" class="form-container">
+                    <div class="gmail-icon-section">
+                        <div class="gmail-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                    </div>
+                    <h2>Check your Gmail</h2>
+                    <p class="gmail-instruction">We've sent a 6-digit verification code to</p>
+                    <p class="gmail-email-display" id="maskedEmail">la*******@gmail.com</p>
+                    <p class="gmail-sub-instruction">Please enter the code to sign in</p>
+                    <div class="email-instructions">
+                        <p><strong>Instructions:</strong></p>
+                        <ul>
+                            <li>Check your Gmail inbox</li>
+                            <li>Look for an email with your verification code</li>
+                            <li>Enter the 6-digit code on the next screen</li>
+                            <li>You'll be automatically signed in</li>
+                        </ul>
+                    </div>
+                    <button type="button" class="btn-secondary" onclick="showVerificationOptions()">
+                        <i class="fas fa-arrow-left"></i>
+                        Try another way
+                    </button>
+                    <div class="resend-section">
+                        <p>Didn't receive the email? <a href="#" onclick="resendGmailCode()">Resend Email</a></p>
+                        <p>Check your spam folder too!</p>
+                    </div>
+                </div>
+
+                <div id="phoneVerificationForm" class="form-container">
+                    <div class="gmail-icon-section">
+                        <div class="gmail-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                    </div>
+                    <h2>Phone Verification</h2>
+                    <p class="gmail-instruction">Code sent to <span id="maskedPhone">+639****09781</span></p>
+                    <p class="gmail-sub-instruction">Please enter the 6-digit code we sent you</p>
+                    
+                    <form id="phoneVerificationFormElement">
+                        <div class="input-group">
+                            <i class="fas fa-key"></i>
+                            <input type="text" id="phoneCode" placeholder="Code" maxlength="6" required>
+                        </div>
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-check-circle"></i>
+                            Verify & Sign In
+                        </button>
+                        <div class="resend-section">
+                            <p>Didn't receive the code? <a href="#" onclick="resendPhoneCode()">Resend Code</a></p>
+                            <p><a href="#" onclick="showVerificationOptions()">Try another way</a></p>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="emailCodeVerificationForm" class="form-container">
+                    <div class="gmail-icon-section">
+                        <div class="gmail-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                    </div>
+                    <h2>Enter Verification Code</h2>
+                    <p class="gmail-instruction">We've sent a 6-digit code to</p>
+                    <p class="gmail-email-display" id="emailCodeVerificationEmail">la*******@gmail.com</p>
+                    <p class="gmail-sub-instruction">Please enter the code to sign in</p>
+                    
+                    <form id="emailCodeVerificationFormElement">
+                        <div class="verification-code-container">
+                            <input type="text" maxlength="1" class="verification-code" id="emailCode1" required>
+                            <input type="text" maxlength="1" class="verification-code" id="emailCode2" required>
+                            <input type="text" maxlength="1" class="verification-code" id="emailCode3" required>
+                            <input type="text" maxlength="1" class="verification-code" id="emailCode4" required>
+                            <input type="text" maxlength="1" class="verification-code" id="emailCode5" required>
+                            <input type="text" maxlength="1" class="verification-code" id="emailCode6" required>
+                        </div>
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-check-circle"></i>
+                            Verify & Sign In
+                        </button>
+                        <div class="resend-section">
+                            <p>Didn't receive the code? <a href="#" onclick="resendEmailVerificationCode()">Resend Code</a></p>
+                            <p><a href="#" onclick="showVerificationOptions()">Try another way</a></p>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="checkGmailForm" class="form-container">
+                    <div class="gmail-icon-section">
+                        <div class="gmail-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                    </div>
+                    <h2>Check your Gmail</h2>
+                    <p class="gmail-instruction">We've sent a sign-in link to</p>
+                    <p class="gmail-email-display" id="checkGmailEmail">la*******@gmail.com</p>
+                    <p class="gmail-sub-instruction">Click the link in the email to sign in</p>
+                    <div class="resend-section">
+                        <p>Didn't receive the email? <a href="#" onclick="resendMagicLink()">Resend Magic Link</a></p>
+                        <p>Check your spam folder too!</p>
+                    </div>
+                    <button type="button" class="btn-secondary" onclick="showVerificationOptions()">
+                        <i class="fas fa-arrow-left"></i>
+                        Try another way
+                    </button>
+                </div>
+
                 <div id="mfaForm" class="form-container">
-                    <h2>Verify Your Identity</h2>
-                    <p class="mfa-instruction">We've sent a verification code to your registered device</p>
+                    <div class="gmail-icon-section">
+                        <div class="gmail-icon">
+                            <i class="fas fa-info"></i>
+                        </div>
+                    </div>
+                    <h2>Verification Code</h2>
+                    <p class="mfa-instruction">Please enter the 6-digit code we sent you</p>
                     <form id="mfaFormElement">
                         <div class="verification-code-container">
                             <input type="text" maxlength="1" class="verification-code" id="code1" required>
@@ -149,7 +301,7 @@
                         </div>
                         <button type="submit" class="btn-primary">
                             <i class="fas fa-check-circle"></i>
-                            Verify
+                            Verify & Sign In
                         </button>
                         <div class="resend-section">
                             <p>Didn't receive the code? <a href="#" onclick="resendCode()">Resend</a></p>
@@ -159,7 +311,6 @@
             </div>
         </div>
 
-        <!-- Dashboard Container -->
         <div id="dashboardContainer" class="dashboard-container" style="display: none;">
             <nav class="navbar">
                 <div class="nav-brand">
@@ -248,16 +399,15 @@
         </div>
     </div>
 
-    <!-- reCAPTCHA Container -->
+    
     <div id="recaptcha-container"></div>
 
-    <!-- Loading Overlay -->
+    
     <div id="loadingOverlay" class="loading-overlay">
         <div class="spinner"></div>
         <p>Authenticating...</p>
     </div>
 
-    <!-- Toast Notification -->
     <div id="toast" class="toast">
         <div class="toast-content">
             <i class="fas fa-check-circle"></i>
@@ -268,7 +418,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="firebase-config.js"></script>
+        <script src="firebase-config.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
