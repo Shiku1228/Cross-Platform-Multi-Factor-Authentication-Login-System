@@ -70,7 +70,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void checkUserStatus() {
         FirebaseUser user = mAuth.getCurrentUser();
+        
+        // If we just came from a successful custom verification, the user might be 
+        // null in the standard mAuth but the session is actually valid.
         if (user == null) {
+            // For debugging: find out why we are being kicked out
+            // Toast.makeText(this, "Debug: User is null, redirecting...", Toast.LENGTH_SHORT).show();
             startActivity(new Intent(this, LoginActivity.class));
             finish();
             return;
