@@ -67,8 +67,11 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
-            // Save email to SharedPreferences so MFASelectionActivity can find it
-            getSharedPreferences("PREFS", MODE_PRIVATE).edit().putString("email", email).apply();
+            // Save email and password to SharedPreferences for MFA completion
+            getSharedPreferences("PREFS", MODE_PRIVATE).edit()
+                .putString("email", email)
+                .putString("password", password)
+                .apply();
 
             mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
