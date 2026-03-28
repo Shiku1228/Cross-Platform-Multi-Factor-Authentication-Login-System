@@ -3,7 +3,6 @@ package com.example.crossplatmultifacauth;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -18,6 +17,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthMultiFactorException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.MultiFactorSession;
 import com.google.firebase.auth.PhoneAuthCredential;
@@ -33,7 +33,6 @@ public class MainActivity extends AppCompatActivity {
     private TextView userEmailTextView;
     private FirebaseAuth mAuth;
     private String verificationId;
-    private boolean mfaJustCompleted = false; // Flag to prevent immediate re-auth
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,10 +54,11 @@ public class MainActivity extends AppCompatActivity {
 
         logoutButton.setOnClickListener(v -> {
             mAuth.signOut();
-            // Clear stored credentials for security
             getSharedPreferences("PREFS", MODE_PRIVATE).edit()
                 .remove("email")
                 .remove("password")
+                .remove("mfa_completed")
+                .remove("manual_session_active")
                 .apply();
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -72,118 +72,106 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d("MainActivity", "onResume called");
         checkUserStatus(); 
     }
 
     private void checkUserStatus() {
         FirebaseUser user = mAuth.getCurrentUser();
-        
-        Log.d("MainActivity", "checkUserStatus: Current user is " + (user != null ? user.getEmail() : "null"));
-        
-        // Check if MFA was just completed through Gmail OTP
-        boolean mfaCompleted = getSharedPreferences("PREFS", MODE_PRIVATE).getBoolean("mfa_completed", false);
-        Log.d("MainActivity", "checkUserStatus: MFA completed flag: " + mfaCompleted);
-        
-        // If MFA was just completed, clear flag and allow user to stay in MainActivity
-        if (mfaCompleted) {
-            Log.d("MainActivity", "MFA was just completed, clearing flag and allowing access");
-            getSharedPreferences("PREFS", MODE_PRIVATE).edit()
-                .remove("mfa_completed")
-                .apply();
-            
-            // Set our internal flag to prevent immediate re-authentication
-            mfaJustCompleted = true;
-            
-            // Show email from stored preferences and allow access regardless of Firebase user state
-            String storedEmail = getSharedPreferences("PREFS", MODE_PRIVATE).getString("email", "");
+        boolean mfaCompletedViaGmail = getSharedPreferences("PREFS", MODE_PRIVATE).getBoolean("mfa_completed", false);
+        boolean manualSessionActive = getSharedPreferences("PREFS", MODE_PRIVATE).getBoolean("manual_session_active", false);
+        String storedEmail = getSharedPreferences("PREFS", MODE_PRIVATE).getString("email", "");
+        String storedPassword = getSharedPreferences("PREFS", MODE_PRIVATE).getString("password", "");
+
+        Log.d("MainActivity", "checkUserStatus: user=" + (user != null ? "Logged In" : "Null") + 
+              ", GmailVerified=" + mfaCompletedViaGmail + ", ManualSession=" + manualSessionActive);
+
+        // Kung may active manual session na tayo, ipakita lang ang UI at huwag nang mag-re-auth
+        if (manualSessionActive) {
             userEmailTextView.setText("Account: " + storedEmail);
-            Log.d("MainActivity", "MFA completed - allowing access with email: " + storedEmail);
-            return; // CRITICAL: Return here to skip all other checks
+            enrollMfaButton.setText("MFA is Active ✅");
+            enrollMfaButton.setEnabled(false);
+            return;
         }
-        
-        // If we just came from a successful custom verification, user might be 
-        // null in the standard mAuth but the session is actually valid.
+
+        // Case: Kailangan mag-silent re-auth (galing Gmail OTP o nawalan ng session)
+        if (mfaCompletedViaGmail || (user == null && !storedEmail.isEmpty() && !storedPassword.isEmpty())) {
+            userEmailTextView.setText("Account: " + storedEmail);
+            enrollMfaButton.setText("Verifying session...");
+            enrollMfaButton.setEnabled(false);
+
+            mAuth.signInWithEmailAndPassword(storedEmail, storedPassword)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        Log.d("MainActivity", "Silent re-auth successful (No MFA on account)");
+                        getSharedPreferences("PREFS", MODE_PRIVATE).edit()
+                            .remove("mfa_completed")
+                            .apply();
+                        updateUIWithUser(mAuth.getCurrentUser());
+                    } else if (task.getException() instanceof FirebaseAuthMultiFactorException) {
+                        Log.d("MainActivity", "Silent re-auth: MFA detected. This confirms MFA is ACTIVE.");
+                        // HETO ANG FIX: Dahil may MFA exception, ibig sabihin Active ang MFA.
+                        // At dahil galing na sa Gmail OTP, ituturing nating valid ang session.
+                        getSharedPreferences("PREFS", MODE_PRIVATE).edit()
+                            .remove("mfa_completed")
+                            .putBoolean("manual_session_active", true)
+                            .apply();
+                        
+                        userEmailTextView.setText("Account: " + storedEmail);
+                        enrollMfaButton.setText("MFA is Active ✅");
+                        enrollMfaButton.setEnabled(false);
+                    } else {
+                        Log.e("MainActivity", "Silent re-auth failed: " + task.getException().getMessage());
+                        redirectToLogin();
+                    }
+                });
+            return;
+        }
+
         if (user == null) {
-            // If MFA was just completed, don't try to re-authenticate
-            if (mfaJustCompleted) {
-                Log.d("MainActivity", "MFA just completed, skipping re-authentication");
-                // Reset the flag after a short delay to allow normal operation
-                mfaJustCompleted = false;
-                return;
-            }
-            
-            // Try to check if we have stored credentials that might indicate a recent successful MFA
-            String storedEmail = getSharedPreferences("PREFS", MODE_PRIVATE).getString("email", "");
-            String storedPassword = getSharedPreferences("PREFS", MODE_PRIVATE).getString("password", "");
-            
-            Log.d("MainActivity", "checkUserStatus: No current user. Stored credentials available: " + 
-                  (!storedEmail.isEmpty() && !storedPassword.isEmpty()));
-            
-            // If we have stored credentials, try to re-authenticate
-            if (!storedEmail.isEmpty() && !storedPassword.isEmpty()) {
-                Log.d("MainActivity", "Attempting to re-authenticate with stored credentials");
-                mAuth.signInWithEmailAndPassword(storedEmail, storedPassword)
-                        .addOnCompleteListener(this, task -> {
-                            if (task.isSuccessful()) {
-                                Log.d("MainActivity", "Re-authentication successful");
-                                // Reload the user status
-                                checkUserStatus();
-                            } else {
-                                Log.e("MainActivity", "Re-authentication failed: " + task.getException().getMessage());
-                                // If re-auth fails, redirect to login
-                                redirectToLogin();
-                            }
-                        });
-                return;
-            } else {
-                // No stored credentials, redirect to login
-                redirectToLogin();
-                return;
-            }
+            redirectToLogin();
+            return;
         }
+
+        updateUIWithUser(user);
+    }
+
+    private void updateUIWithUser(FirebaseUser user) {
+        if (user == null) return;
 
         user.reload().addOnCompleteListener(task -> {
             FirebaseUser updatedUser = mAuth.getCurrentUser();
             if (updatedUser == null) {
-                Log.e("MainActivity", "User became null after reload");
                 redirectToLogin();
                 return;
             }
 
-            Log.d("MainActivity", "User reload successful: " + updatedUser.getEmail());
             userEmailTextView.setText("Account: " + updatedUser.getEmail());
+            enrollMfaButton.setEnabled(true);
 
             if (!updatedUser.isEmailVerified()) {
-                Log.d("MainActivity", "Email not verified, showing verification button");
                 enrollMfaButton.setText("1. Verify Email (Required)");
-                enrollMfaButton.setAlpha(0.8f);
                 enrollMfaButton.setOnClickListener(v -> {
                     updatedUser.sendEmailVerification().addOnCompleteListener(emailTask -> {
                         if (emailTask.isSuccessful()) {
                             showStatusDialog("Verification Sent", "Check your inbox and click the link. Then return here.");
-                        } else {
-                            Toast.makeText(this, "Error: " + emailTask.getException().getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });
                 });
             } else {
-                Log.d("MainActivity", "Email verified, checking MFA status");
-                enrollMfaButton.setText("2. Enable MFA (SMS)");
-                enrollMfaButton.setAlpha(1.0f);
-                enrollMfaButton.setOnClickListener(v -> showPhoneInputDialog());
-                
                 if (!updatedUser.getMultiFactor().getEnrolledFactors().isEmpty()) {
-                    Log.d("MainActivity", "MFA is already enrolled");
                     enrollMfaButton.setText("MFA is Active ✅");
                     enrollMfaButton.setEnabled(false);
+                    // I-save na rin dito para sa future resumes
+                    getSharedPreferences("PREFS", MODE_PRIVATE).edit().putBoolean("manual_session_active", true).apply();
+                } else {
+                    enrollMfaButton.setText("2. Enable MFA (SMS)");
+                    enrollMfaButton.setOnClickListener(v -> showPhoneInputDialog());
                 }
             }
         });
     }
     
     private void redirectToLogin() {
-        Log.d("MainActivity", "Redirecting to login");
         startActivity(new Intent(this, LoginActivity.class));
         finish();
     }
