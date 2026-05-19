@@ -1,0 +1,16 @@
+{
+  "name": "Cross-Platform",
+  "productName": "Cross-Platform",
+  "description": "My Electron application description",
+  "keywords": [],
+  "main": "./main.js",
+  "version": "1.0.0",
+  "author": "Nicole",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "41.1.1"
+  }
+}
